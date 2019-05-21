@@ -307,12 +307,41 @@ int main(int argc, char** argv)
   GifColorType* filein_colors = colormap->Colors;
 
   // start at the end of colormap
+  int dupcount=0;
   for (int i=num_color_colormap-1, j=0; i>=num_color_colormap-number_colors_input; --i,++j)
   {
     COLOR acolor = addcolors[j];
-    filein_colors[i].Red = acolor.r;
-    filein_colors[i].Green= acolor.g;
-    filein_colors[i].Blue = acolor.b;
+
+    // check if such color already existed in the colormap
+    // if so then skip this color
+    bool existed = false;
+    for (int k=0; k<num_color_colormap; ++k)
+    {
+      if (acolor.r == filein_colors[k].Red &&
+          acolor.g == filein_colors[k].Green &&
+          acolor.b == filein_colors[k].Blue)
+      {
+        existed = true;
+        printf("found existing color %hhu,%hhu,%hhu\n", acolor.r, acolor.g, acolor.b);
+        break;
+      }
+    }
+
+    // increment duplicated count, if existed
+    // so we don't move index backward in colormap unneccessarily
+    if (existed)
+    {
+      ++dupcount;
+    }
+    // if not existed, then add such color
+    else
+    {
+      int target_i = i + dupcount;
+
+      filein_colors[target_i].Red = acolor.r;
+      filein_colors[target_i].Green= acolor.g;
+      filein_colors[target_i].Blue = acolor.b;
+    }
   }
 
   // now we're ready to write to output file
