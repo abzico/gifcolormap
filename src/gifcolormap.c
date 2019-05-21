@@ -1,11 +1,21 @@
 /**
+ * Introduction
+ * #############
  * Program designed to work with colormap of gif image.
  * If you need to swap target color to the first position of colormap, see tcolorswap at https://github.com/abzico/tcolorswap.
  *
  * This program is designed to work with only 1 single image at a time.
  * You can batch process several images by executing this program via bash script.
  *
- * cli usage
+ * Warning
+ * ########
+ * no need for color translation
+ * users should spare enough safe slots for new colors to be added
+ * so the existing colors in colormap won't be modified for their positions
+ * this requires planning before using this program
+ *
+ * Cli Usage
+ * #########
  *  gifcolormap -add-colormap r,g,b|... input-file output-file
  *  ex. gifcolormap -add-color 248,248,12 -add-color 124,224,124 input.gif output.gif
  *
@@ -38,12 +48,6 @@ struct COLOR
 // input/output filenames
 static const char* input_filename = NULL;
 static const char* output_filename = NULL;
-// temporary holder of to-be-added color (RGB)
-// default is dummy values
-// this will hold each value set via -add-colormap parameter
-static unsigned char holding_red = 255;
-static unsigned char holding_green = 255;
-static unsigned char holding_blue = 255;
 
 // variable to hold colors-input
 // will be dynamically allocated according to the number of input colors in parameters
@@ -284,12 +288,6 @@ int main(int argc, char** argv)
     exitnow(1, "Error number of colors in colormap is 0\n");
   }
 
-  // form the target color
-  GifColorType target_trans_color;
-  target_trans_color.Red = trans_red;
-  target_trans_color.Green = trans_green;
-  target_trans_color.Blue = trans_blue;
-
   // global color map
   // global color map is colormap (not histogram) as shown in `identify -verbose ...`
   // color map always in RGB format, and has maximum of 256 colors in a single map
@@ -409,7 +407,6 @@ int main(int argc, char** argv)
         }
 
         int i;
-        register GifPixelType* cp;
 
         GifPixelType* line = (GifPixelType*)malloc(gif_filein->Image.Width * sizeof(GifPixelType));
         for (i=0; i<gif_filein->Image.Height; ++i)
@@ -420,19 +417,10 @@ int main(int argc, char** argv)
             exitnow(1, "Error getting line from input image\n");
           }
 
-          // do translation (only one pixel for target transparent pixel)
-          // this happens only once
-          //for (cp = line; cp < line + gif_filein->Image.Width; ++cp)
-          //{
-          //  if (*cp == marked_posidx)
-          //  {
-          //    *cp = 0;
-          //  }
-          //  else if (*cp == 0)
-          //  {
-          //    *cp = marked_posidx;
-          //  }
-          //}
+          // no need for color translation
+          // users should spare enough safe slots for new colors to be added
+          // so the existing colors in colormap won't be modified for their positions
+          // this requires planning before using this program
 
           // put line
           if (EGifPutLine(gif_fileout, line, gif_filein->Image.Width) == GIF_ERROR)
